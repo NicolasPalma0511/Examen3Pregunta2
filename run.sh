@@ -9,18 +9,23 @@ DB_CONNECTION_STRING="Server=tcp:ec2-54-161-11-166.compute-1.amazonaws.com,1433;
 mkdir $PROJECT_NAME
 cd $PROJECT_NAME
 
-# Crear el modelo Producto
+# Crear el modelo Producto con el namespace correcto
 mkdir -p Models
 cat <<EOL > Models/Producto.cs
-public class Producto
+namespace $PROJECT_NAME.Models
 {
-    public int Id { get; set; }
-    public string Nombre { get; set; }
-    public decimal Precio { get; set; }
+    public class Producto
+    {
+        public int ProductID { get; set; }
+        public string Name { get; set; }
+        public string ProductNumber { get; set; }
+        public string Color { get; set; }
+        public decimal StandardCost { get; set; }
+    }
 }
 EOL
 
-# Crear el servicio ProductoService
+# Crear el servicio ProductoService con el namespace correcto
 mkdir -p Services
 cat <<EOL > Services/ProductoService.cs
 using Microsoft.Data.SqlClient;
@@ -28,45 +33,50 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using $PROJECT_NAME.Models;
 
-public class ProductoService
+namespace $PROJECT_NAME.Services
 {
-    private readonly string _connectionString;
-
-    public ProductoService(string connectionString)
+    public class ProductoService
     {
-        _connectionString = connectionString;
-    }
+        private readonly string _connectionString;
 
-    public async Task<List<Producto>> GetProductosAsync()
-    {
-        var productos = new List<Producto>();
-
-        using (SqlConnection connection = new SqlConnection(_connectionString))
+        public ProductoService(string connectionString)
         {
-            await connection.OpenAsync();
-            string query = "SELECT Id, Nombre, Precio FROM Productos";
-
-            using (SqlCommand command = new SqlCommand(query, connection))
-            using (SqlDataReader reader = await command.ExecuteReaderAsync())
-            {
-                while (await reader.ReadAsync())
-                {
-                    productos.Add(new Producto
-                    {
-                        Id = reader.GetInt32(0),
-                        Nombre = reader.GetString(1),
-                        Precio = reader.GetDecimal(2)
-                    });
-                }
-            }
+            _connectionString = connectionString;
         }
 
-        return productos;
+        public async Task<List<Producto>> GetProductosAsync()
+        {
+            var productos = new List<Producto>();
+
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                string query = "SELECT ProductID, Name, ProductNumber, Color, StandardCost FROM Production.Product";
+
+                using (SqlCommand command = new SqlCommand(query, connection))
+                using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        productos.Add(new Producto
+                        {
+                            ProductID = reader.GetInt32(0),
+                            Name = reader.GetString(1),
+                            ProductNumber = reader.GetString(2),
+                            Color = reader.IsDBNull(3) ? "N/A" : reader.GetString(3), // Manejo de valores NULL en Color
+                            StandardCost = reader.GetDecimal(4)
+                        });
+                    }
+                }
+            }
+
+            return productos;
+        }
     }
 }
 EOL
 
-# Crear el controlador ProductosController
+# Crear el controlador ProductosController con el namespace correcto
 mkdir -p Controllers
 cat <<EOL > Controllers/ProductosController.cs
 using Microsoft.AspNetCore.Mvc;
@@ -75,22 +85,25 @@ using System.Threading.Tasks;
 using $PROJECT_NAME.Models;
 using $PROJECT_NAME.Services;
 
-[Route("api/[controller]")]
-[ApiController]
-public class ProductosController : ControllerBase
+namespace $PROJECT_NAME.Controllers
 {
-    private readonly ProductoService _productoService;
-
-    public ProductosController(ProductoService productoService)
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ProductosController : ControllerBase
     {
-        _productoService = productoService;
-    }
+        private readonly ProductoService _productoService;
 
-    [HttpGet]
-    public async Task<ActionResult<List<Producto>>> Get()
-    {
-        var productos = await _productoService.GetProductosAsync();
-        return Ok(productos);
+        public ProductosController(ProductoService productoService)
+        {
+            _productoService = productoService;
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<List<Producto>>> Get()
+        {
+            var productos = await _productoService.GetProductosAsync();
+            return Ok(productos);
+        }
     }
 }
 EOL
@@ -120,7 +133,7 @@ cat <<EOL > $PROJECT_NAME.csproj
     <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.0" />
   </ItemGroup>
 </Project>
 EOL
