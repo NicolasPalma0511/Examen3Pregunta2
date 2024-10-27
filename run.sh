@@ -63,7 +63,7 @@ namespace $PROJECT_NAME.Services
                             ProductID = reader.GetInt32(0),
                             Name = reader.GetString(1),
                             ProductNumber = reader.GetString(2),
-                            Color = reader.IsDBNull(3) ? "N/A" : reader.GetString(3), // Manejo de valores NULL en Color
+                            Color = reader.IsDBNull(3) ? "N/A" : reader.GetString(3),
                             StandardCost = reader.GetDecimal(4)
                         });
                     }
@@ -110,6 +110,9 @@ EOL
 
 # Crear Program.cs con la configuración del servicio y la cadena de conexión
 cat <<EOL > Program.cs
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using $PROJECT_NAME.Services;
 
 var builder = WebApplication.CreateBuilder(args);
