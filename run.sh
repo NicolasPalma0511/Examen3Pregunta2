@@ -156,7 +156,7 @@ RUN dotnet publish "$PROJECT_NAME.csproj" -c Release -o /app/publish
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "$PROJECT_NAME.dll"]
+ENTRYPOINT ["dotnet", "$PROJECT_NAME.dll", "--urls", "http://0.0.0.0:80"]
 EOL
 
 # Construir y ejecutar el contenedor Docker
