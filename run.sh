@@ -3,7 +3,7 @@
 # Variables
 PROJECT_NAME="MiApiSQL"
 CONTAINER_NAME="mi-api-sql"
-DB_CONNECTION_STRING="Server=tcp:ec2-54-161-11-166.compute-1.amazonaws.com,1433;Database=AdventureWorks2019;User Id=SA;Password=YourStrong@Passw0rd;"
+DB_CONNECTION_STRING="Server=tcp:ec2-54-161-11-166.compute-1.amazonaws.com,1433;Database=AdventureWorks2019;User Id=SA;Password=YourStrong@Passw0rd;Encrypt=False;"
 
 # Crear la estructura de archivos del proyecto
 mkdir $PROJECT_NAME
